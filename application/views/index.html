@@ -1,0 +1,223 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+    <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+    <script src="/public/jquery.min.js"></script>
+    <title>物流查询系统</title>
+    <style>
+        aside,section{ height: 755px; border: 1px solid #666666; display:block; float:left; padding-top:1px; }
+        aside{ width: 15%; }
+        section{ width: 65%;overflow-y: scroll; }
+        button{ width: 40%; height: 44px; margin-top: 2%; }
+        th,td{
+            padding: 1px 20px 0;
+        }
+        li{
+            display: inline-block;
+            margin-left: 94px;
+        }
+        #order_err {
+            overflow: scroll;
+            height: 92%;
+        }
+        #order_err > li{
+            width: 100%;
+            margin-left: 0;
+            margin-top: 7px;
+            display: list-item;
+            color: #e62525;
+            font-size: 16px;
+        }
+
+        #logistics{
+            padding: 5px;
+            font-size: 15px;
+        }
+    </style>
+</head>
+<body align="center">
+    <center>
+        <ul>
+            <li>总共查询:<span><font color="#ff8c00" size="6" id="totals" class="total_num">0</font></span>条</li>
+            <li>查询成功:<span><font color="green" size="6" id="success_nums" class="total_num">0</font></span>条</li>
+            <li>查询失败:<span><font color="red" size="6" id="error_nums" class="total_num">0</font></span>条</li>
+            <li>耗时:<span><font color="red" size="6" id="total_time" class="total_num">0</font></span>秒</li>
+            <li>物流类型:
+                <select name="logistics" id="logistics">
+                    <option value="guoji" selected>商壹物流</option>
+                    <option value="heimao" >黑猫物流</option>
+                    <option value="jl" >嘉里物流</option>
+                    <option value="sf" >顺丰</option>
+                    <option value="sld" >速利达</option>
+                    <option value="sh" >森鸿</option>
+                    <option value="riben" >日本邮局</option>
+                </select>
+            </li>
+        </ul>
+    <aside>
+        <textarea cols="30" rows="50" style="width:98%; border:none;"></textarea>
+    </aside>
+    <section>
+        <table id="guoji">
+            <tr> <th>运单</th> <th>日期</th> <th>时间</th>  <th>位置</th> <th>状态</th> </tr>
+        </table>
+        <table id="heimao" style="display: none;">
+            <tr> <th>包裹查詢號碼</th> <th>日期</th> <th>負責營業所</th> <th>目前狀態</th> </tr>
+        </table>
+        <table id="jl" style="display: none;">
+            <tr> <th>运单</th> <th>日期</th>  <th>状态</th> </tr>
+        </table>
+        <table id="sf" style="display: none;">
+            <tr> <th>运单</th> <th>日期</th>  <th>状态</th> </tr>
+        </table>
+        <table id="sld" style="display: none;">
+            <tr> <th>运单</th> <th>日期</th>  <th>状态</th> </tr>
+        </table>
+        <table id="sh" style="display: none;">
+            <tr> <th>运单</th> <th>目的地</th>  <th>日期</th> <th>状态</th> </tr>
+        </table>
+        <table id="riben" style="display: none;">
+            <tr><th>查询号码</th><th>类型</th><th>日期</th><th>最新状态</th><th>最新处理办公室	</th><th>县名等</th><th>邮政编码</th></tr>
+        </table>
+
+
+    </section>
+    <aside>
+        <h3>以下订单查询失败:</h3>
+        <ul id="order_err">
+        </ul>
+    </aside>
+    <footer>
+        <button>查询</button>
+    </footer>
+    </center>
+    <script type="text/javascript">
+        $(function(){
+            var timesss=5;
+            var now_time=$('#total_time').html();
+            timehandle=new Object();
+            $('button').click(function(){
+                datas=$('textarea').val();
+                logistics_type=$('#logistics').val();
+                $('#'+logistics_type+'> tbody > tr').first().siblings('tr').remove();
+                $('#order_err').html('');
+                $('#success_nums').html(0);
+                $('button').attr('disabled','disabled');
+                now_time=0;
+                timehandle=setInterval(function(){
+                    now_time = parseInt(now_time)+1
+                    $('#total_time').html(now_time);
+                },1000);
+                $.ajax({
+                    url:'index.php/Welcome/handle',
+                    data:{data:datas,logistics_type:logistics_type},
+                    dataType:'JSON',
+                    type:'post',
+                    success:function(content){
+                        totals=0;
+                        success_nums=0;
+                        error_nums=0;
+                        for(var i in content){
+                            tr_tmp='';
+                            spans='';
+                            if(i == 'ok'){
+                                for(var y in content[i]){
+                                    console.log(logistics_type);
+                                    if(logistics_type == 'guoji'){
+                                        tr_tmp += '<tr><td>'+content[i][y].waybillNum+'</td>'
+                                            + '<td>'+content[i][y].TIME+'</td>'
+                                            + '<td>'+content[i][y].DATE+'</td>'
+                                            + '<td>'+content[i][y].POSITION+'</td>'
+                                            + '<td>'+content[i][y].podstatus+'</td></tr>';
+                                    } else if(logistics_type == 'heimao' ){
+                                        tr_tmp += '<tr><td>'+content[i][y][0]+'</td>'
+                                            + '<td>'+content[i][y][2]+'</td>'
+                                            + '<td>'+content[i][y][3]+'</td>'
+                                            + '<td>'+content[i][y][1]+'</td></tr>';
+                                    } else if(logistics_type == 'jl'){
+                                        tr_tmp += '<tr><td>'+content[i][y][0]+'</td>'
+                                            + '<td>'+content[i][y][1]+'</td>'
+                                            + '<td>'+content[i][y][2]+'</td></tr>';
+                                    }else if(logistics_type == 'sf'){
+                                        tr_tmp += '<tr><td>'+content[i][y]['nu']+'</td>'
+                                            + '<td>'+content[i][y]['ftime']+'</td>'
+                                            + '<td>'+content[i][y]['context']+'</td></tr>';
+                                    }else if(logistics_type == 'sld'){
+                                        tr_tmp += '<tr><td>'+content[i][y][0]+'</td>'
+                                            + '<td>'+content[i][y][1]+'</td>'
+                                            + '<td>'+content[i][y][2]+'</td></tr>';
+                                    }else if(logistics_type == 'sh'){
+                                        tr_tmp += '<tr><td>'+content[i][y][0]+'</td>'
+                                            + '<td>'+content[i][y][1]+'</td>'
+                                            + '<td>'+content[i][y][2]+'</td>'
+                                            + '<td>'+content[i][y][3]+'</td></tr>';
+                                    }else if(logistics_type=='riben'){
+                                        tr_tmp += '<tr><td>'+content[i][y][0]+'</td>'
+                                            + '<td>'+content[i][y][1]+'</td>'
+                                            + '<td>'+content[i][y][2]+'</td>'
+                                            + '<td>'+content[i][y][3]+'</td>'
+                                            + '<td>'+content[i][y][4]+'</td>'
+                                            + '<td>'+content[i][y][5]+'</td>'
+                                            + '<td>'+content[i][y][6]+'</td></tr>';
+                                    }
+
+                                }
+                                $('#'+logistics_type+'> tbody').last('tr').append(tr_tmp);
+                                success_nums=content[i].length;
+                                $('#success_nums').html(success_nums);
+                            }else if(i == 'err'){
+                                for(var error in content[i]){
+                                    console.log(logistics_type);
+                                    if(logistics_type=='guoji'){
+                                        spans += '<li> <a href="http://www.1express.net/podInfo.html?waybillNum='+content[i][error]+' target="_blank" >'+content[i][error]+'</a></li>';
+                                    }else if(logistics_type =='heimao'){
+                                        spans += '<li> <a href="http://www.t-cat.com.tw/Inquire/TraceDetail.aspx?BillID='+content[i][error]+'&ReturnUrl=Trace.aspx" target="_blank">'+content[i][error]+'</a></li>';
+                                    }else if(logistics_type == 'jl'){
+                                        spans += '<li> <a href="http://hk.kerryexpress.com/track?track='+content[i][error]+'" target="_blank">'+content[i][error]+'</a></li>';
+                                    }else if(logistics_type == 'sf'){
+                                        spans += '<li>'+content[i][error]+'</li>';
+                                    }else if(logistics_type == 'sld'){
+                                        spans += '<li>'+content[i][error]+'</li>';
+                                    }else if(logistics_type == 'sh'){
+                                        spans += '<li>'+content[i][error]+'</li>';
+                                    }else if(logistics_type == 'riben'){
+                                        spans += '<li> <a href="https://trackings.post.japanpost.jp/services/srv/search/?requestNo1='+content[i][error]+'&search.x=101&search.y=16&locale=ja" target="_blank">'+content[i][error]+'</a></li>';
+                                    }
+                                }
+                                $('#order_err').append(spans);
+                                error_nums=content[i].length;
+                               $('#error_nums').html(error_nums);
+                            }else{
+                                alert('查询失败');
+                                return false;
+                            }
+                        }
+                    },
+                    error:function(content){
+                        alert('查询失败!')
+                    },
+                    complete:function(){
+                        $('button').removeAttr('disabled');
+                        clearInterval(timehandle);
+                    }
+                });
+            });
+            //切换不同的表格图形
+            $('#logistics').change(function(){
+                tableid=$(this).val();
+                console.log(tableid);
+                $('#'+tableid).show().siblings('table').hide();
+            });
+            $('textarea').change(function(){
+                   content=$('textarea').val().trim();
+                   if(content == ''){
+                           nums=0;
+                  }else{
+                      nums=content.split('\n').length;
+                  }
+                $('#totals').html(nums);
+           });
+        });
+    </script>
+</body>
+</html>
