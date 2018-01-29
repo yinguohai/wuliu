@@ -87,9 +87,12 @@ function split_html($str,$type){
             break;
         case RIBEN:
             $html=tags_content($str,'table',1);
-            $result=trim(preg_replace('/[\s|'.PHP_EOL.']{2,}/','@@',strip_tags($html,'<br>')),'@@');
-            $result=preg_replace('/@@<br>@@/',' ',$result);
-            $check=explode('@@',$result);
+            $html=preg_replace('/<td[a-z|\s|\d|=|_|"]*>/','###',$html);
+
+            $result=trim(preg_replace('/[\s|'.PHP_EOL.']{2,}/','',strip_tags($html,'<br>')),'@@');
+//            $result=preg_replace('/@@<br>@@/',' ',$result);
+            $check=explode('###',$result);
+            array_shift($check);
             $ok=$err=[];
             //检查异常情况
             foreach($check as $k  => $v){
@@ -103,7 +106,6 @@ function split_html($str,$type){
                 }
             }
             $tmp=array_chunk($ok,7);
-            array_shift($tmp);
             return ['ok'=>$tmp,'err'=>$err];
             break;
     }
